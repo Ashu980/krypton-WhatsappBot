@@ -36,6 +36,8 @@ const capitalize = (content, all = false) => {
         .join('')}`
 }
 
+const formatSeconds = (seconds) => new Date(seconds * 1000).toISOString().substr(11, 8)
+
 /**
  * @param {Buffer} input
  * @returns {Promise<Buffer>}
@@ -233,6 +235,7 @@ module.exports = {
     capitalize,
     execute,
     extractNumbers,
+    formatSeconds,
     fetch,
     formatSize,
     removeBG,

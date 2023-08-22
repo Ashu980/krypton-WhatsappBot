@@ -1,39 +1,33 @@
-const { Sticker, StickerTypes } = require('wa-sticker-formatter')
+const { Sticker } = require('wa-sticker-formatter')
 
-module.exports = {
+module.exports.execute = async (client, flag, arg, M) => {
+    if (!M.messageTypes(M.type) && !M.messageTypes(M.quoted.mtype))
+        return void M.reply('🟥 *Caption/Quote an image/video/gif message*')
+
+    const pack = arg.split('|')
+    const buffer = M.quoted ? await M.quoted.download() : await M.download()
+    const sticker = await new Sticker(buffer, {
+        pack: pack[1] ? pack[1].trim() : '👾 Handcrafted for you by',
+        author: pack[2] ? pack[2].trim() : `Krypton 👾`,
+        categories: ['🤩', '🎉'],
+        quality: 70,
+        type:
+            flag.includes('--c') || flag.includes('--crop')
+                ? 'crop'
+                : flag.includes('--s') || flag.includes('--stretch')
+                ? 'default'
+                : flag.includes('--circle')
+                ? 'circle'
+                : 'full'
+    }).build()
+    await client.sendMessage(M.from, { sticker }, { quoted: M })
+}
+
+module.exports.command = {
     name: 'sticker',
     aliases: ['s'],
     category: 'utils',
+    usage: '[quote the video or image] |PackName|AuthorName',
     exp: 15,
-    description: 'sticker [caption/quote message containing media] <pack> | <author>',
-    async execute(client, flag, arg, M) {
-        const content = JSON.stringify(M.quoted)
-        const isMedia = M.type === 'imageMessage' || M.type === 'videoMessage'
-        const isQuoted =
-            (M.type === 'extendedTextMessage' && content.includes('imageMessage')) ||
-            (M.type === 'extendedTextMessage' && content.includes('videoMessage'))
-
-        if (isMedia || isQuoted) {
-            const pack = arg.split('|')
-            const buffer = isQuoted ? await M.quoted.download() : await M.download()
-            const sticker = new Sticker(buffer, {
-                pack: pack[0] ? pack[0].trim() : '👾 Handcrafted for you by',
-                author: pack[1] ? pack[1].trim() : `Krypton 👾`,
-                type: StickerTypes.FULL,
-                categories: ['🤩', '🎉'],
-                quality: 70
-            })
-
-            await client.sendMessage(
-                M.from,
-                {
-                    sticker: await sticker.build()
-                },
-                {
-                    quoted: M
-                }
-            )
-        } else return M.reply('Please quote or caption the image/video')
-        // console.log(buffer)
-    }
+    description: 'Converts a normal video or an image into sticker'
 }
